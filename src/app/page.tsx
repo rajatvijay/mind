@@ -1,65 +1,191 @@
-import Image from "next/image";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { db } from "@/db/client";
+import { articles } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { addArticle, toggleRead, deleteArticle } from "./actions";
+import { SignOutButton, GenerateTokenSection } from "./client";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) return null;
+
+  const items = await db
+    .select()
+    .from(articles)
+    .where(eq(articles.userId, session.user.id))
+    .orderBy(desc(articles.createdAt));
+
+  const unread = items.filter((a) => !a.read);
+  const read = items.filter((a) => a.read);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="mx-auto min-h-screen max-w-2xl bg-gray-950 px-4 py-8 text-white">
+      <header className="mb-8 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Mind</h1>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-400">{session.user.email}</span>
+          <SignOutButton />
+        </div>
+      </header>
+
+      {/* Add article form */}
+      <form action={addArticle} className="mb-8 flex gap-2">
+        <input
+          type="url"
+          name="url"
+          placeholder="Paste a URL..."
+          required
+          className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <button
+          type="submit"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-blue-500"
+        >
+          Save
+        </button>
+      </form>
+
+      {/* Unread articles */}
+      {unread.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-500">
+            Unread ({unread.length})
+          </h2>
+          <ul className="space-y-2">
+            {unread.map((article) => (
+              <ArticleRow key={article.id} article={article} />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Read articles */}
+      {read.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-500">
+            Read ({read.length})
+          </h2>
+          <ul className="space-y-2">
+            {read.map((article) => (
+              <ArticleRow key={article.id} article={article} />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {items.length === 0 && (
+        <p className="text-center text-gray-500">
+          No articles yet. Paste a URL above or share from your phone.
+        </p>
+      )}
+
+      {/* Settings */}
+      <hr className="my-8 border-gray-800" />
+      <GenerateTokenSection />
     </div>
+  );
+}
+
+function ArticleRow({
+  article,
+}: {
+  article: {
+    id: string;
+    url: string;
+    title: string;
+    read: boolean | null;
+    createdAt: Date | null;
+  };
+}) {
+  const hostname = new URL(article.url).hostname.replace("www.", "");
+
+  return (
+    <li className="group flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900 p-3">
+      <div className="min-w-0 flex-1">
+        <a
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block truncate text-sm font-medium text-white hover:text-blue-400"
+        >
+          {article.title || article.url}
+        </a>
+        <span className="text-xs text-gray-500">{hostname}</span>
+      </div>
+      <div className="flex shrink-0 gap-1">
+        <form
+          action={async () => {
+            "use server";
+            await toggleRead(article.id, !article.read);
+          }}
+        >
+          <button
+            type="submit"
+            className="rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-white"
+            title={article.read ? "Mark unread" : "Mark read"}
+          >
+            {article.read ? (
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 19V5a2 2 0 012-2h14a2 2 0 012 2v14l-9-4-9 4z"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            )}
+          </button>
+        </form>
+        <form
+          action={async () => {
+            "use server";
+            await deleteArticle(article.id);
+          }}
+        >
+          <button
+            type="submit"
+            className="rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-red-400"
+            title="Delete"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </form>
+      </div>
+    </li>
   );
 }
