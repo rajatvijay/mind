@@ -7,7 +7,7 @@ import { isValidUrl, fetchMetadata } from "@/lib/utils";
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Missing token" }, { status: 401 });
+    return NextResponse.json({ ok: false, message: "Missing token" }, { status: 401 });
   }
 
   const token = authHeader.slice(7).trim();
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     .limit(1);
 
   if (!row) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ ok: false, message: "Invalid token" }, { status: 401 });
   }
 
   // Parse URL from body — handle JSON, form data, or plain text
@@ -42,30 +42,36 @@ export async function POST(req: NextRequest) {
   }
 
   if (!url || !isValidUrl(url)) {
-    return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+    return NextResponse.json({ ok: false, message: "Invalid URL" }, { status: 400 });
   }
 
   // Save with full metadata
   const metadata = await fetchMetadata(url);
 
+  const finalTitle = title || metadata.title;
+
   await db.insert(articles).values({
     userId: row.userId,
     url,
-    title: title || metadata.title,
+    title: finalTitle,
     description: metadata.description,
     ogImage: metadata.ogImage,
     favicon: metadata.favicon,
     domain: metadata.domain,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    message: `Saved — ${finalTitle}`,
+    title: finalTitle,
+  });
 }
 
 // Also support GET for simpler shortcut setups
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Missing token" }, { status: 401 });
+    return NextResponse.json({ ok: false, message: "Missing token" }, { status: 401 });
   }
 
   const token = authHeader.slice(7).trim();
@@ -76,26 +82,32 @@ export async function GET(req: NextRequest) {
     .limit(1);
 
   if (!row) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json({ ok: false, message: "Invalid token" }, { status: 401 });
   }
 
   const url = req.nextUrl.searchParams.get("url")?.trim();
   if (!url || !isValidUrl(url)) {
-    return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+    return NextResponse.json({ ok: false, message: "Invalid URL" }, { status: 400 });
   }
 
   const metadata = await fetchMetadata(url);
   const titleParam = req.nextUrl.searchParams.get("title");
 
+  const finalTitle = titleParam || metadata.title;
+
   await db.insert(articles).values({
     userId: row.userId,
     url,
-    title: titleParam || metadata.title,
+    title: finalTitle,
     description: metadata.description,
     ogImage: metadata.ogImage,
     favicon: metadata.favicon,
     domain: metadata.domain,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    message: `Saved — ${finalTitle}`,
+    title: finalTitle,
+  });
 }
