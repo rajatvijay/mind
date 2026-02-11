@@ -23,6 +23,8 @@ import {
 } from "@/app/actions";
 import { KeyboardHelp } from "./keyboard-help";
 import { Swipeable } from "./swipeable";
+import { FirstTimeEmptyState, AllCaughtUpState, NoResultsState, NoReadState } from "./empty-states";
+import { RelativeTime } from "./relative-time";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -147,6 +149,14 @@ const ArticleCard = memo(function ArticleCard({
             />
           )}
           <span>{hostname}</span>
+          {article.createdAt && (
+            <>
+              <span className="text-gray-500">&middot;</span>
+              <span className="text-gray-500">
+                <RelativeTime date={article.createdAt} />
+              </span>
+            </>
+          )}
         </div>
         {article.description && (
           <p className="mt-1 text-xs text-gray-400 line-clamp-2">
@@ -538,28 +548,14 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
           ))}
         </ul>
       ) : optimisticArticles.length === 0 ? (
-        <p className="py-12 text-center text-gray-400">
-          No articles yet. Paste a URL above or share from your phone.
-        </p>
+        <FirstTimeEmptyState />
       ) : debouncedSearch ? (
-        <p className="py-8 text-center text-sm text-gray-400">
-          No articles matching &ldquo;{debouncedSearch}&rdquo;.{" "}
-          <button
-            onClick={() => setSearch("")}
-            className="text-blue-400 hover:underline"
-          >
-            Clear search
-          </button>
-        </p>
+        <NoResultsState query={debouncedSearch} onClear={() => setSearch("")} />
       ) : tab === "unread" ? (
-        <p className="py-8 text-center text-sm text-gray-400">
-          All caught up. Nothing unread.
-        </p>
-      ) : (
-        <p className="py-8 text-center text-sm text-gray-400">
-          No read articles yet.
-        </p>
-      )}
+        <AllCaughtUpState />
+      ) : tab === "read" ? (
+        <NoReadState />
+      ) : null}
 
       {/* Keyboard shortcut hint */}
       {optimisticArticles.length > 0 && (
