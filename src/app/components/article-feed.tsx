@@ -22,6 +22,7 @@ import {
   type ActionState,
 } from "@/app/actions";
 import { KeyboardHelp } from "./keyboard-help";
+import { Swipeable } from "./swipeable";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -521,13 +522,19 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
       {filtered.length > 0 ? (
         <ul className="space-y-2" role="feed" aria-label="Articles">
           {filtered.map((article, i) => (
-            <ArticleCard
+            <Swipeable
               key={article.id}
-              article={article}
-              onToggleRead={handleToggleRead}
-              onDelete={handleDelete}
-              focused={i === focusedIndex}
-            />
+              onSwipeLeft={() => handleDelete(article.id)}
+              onSwipeRight={() => handleToggleRead(article.id, !article.read)}
+              rightLabel={article.read ? "Unread" : "Read"}
+            >
+              <ArticleCard
+                article={article}
+                onToggleRead={handleToggleRead}
+                onDelete={handleDelete}
+                focused={i === focusedIndex}
+              />
+            </Swipeable>
           ))}
         </ul>
       ) : optimisticArticles.length === 0 ? (
