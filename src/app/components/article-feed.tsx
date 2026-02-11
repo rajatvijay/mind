@@ -33,7 +33,7 @@ type OptimisticAction =
   | { type: "toggle"; id: string }
   | { type: "delete"; id: string };
 
-type Tab = "all" | "unread" | "read";
+type Tab = "unread" | "read";
 type Sort = "newest" | "oldest" | "domain";
 
 // ── Submit Button (uses useFormStatus) ───────────────────────────────
@@ -267,8 +267,9 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
   const filtered = useMemo(() => {
     let result = optimisticArticles;
 
-    if (tab === "unread") result = result.filter((a) => !a.read);
-    if (tab === "read") result = result.filter((a) => a.read);
+    result = tab === "unread"
+      ? result.filter((a) => !a.read)
+      : result.filter((a) => a.read);
 
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
@@ -430,8 +431,7 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  const tabs: { key: Tab; label: string; count?: number }[] = [
-    { key: "all", label: "All", count: optimisticArticles.length },
+  const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "unread", label: "Unread", count: unreadCount },
     { key: "read", label: "Read", count: readCount },
   ];
@@ -520,8 +520,7 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
                   : "text-gray-400 hover:text-gray-300"
               }`}
             >
-              {t.label}
-              {t.count !== undefined ? ` (${t.count})` : ""}
+              {t.label} ({t.count})
             </button>
           ))}
         </div>
