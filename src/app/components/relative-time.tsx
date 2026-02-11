@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
@@ -26,18 +26,22 @@ function formatRelativeTime(date: Date): string {
   return rtf.format(Math.round(duration), "years");
 }
 
-export function RelativeTime({ date }: { date: Date | null }) {
-  const [mounted, setMounted] = useState(false);
+const emptySubscribe = () => () => {};
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+function useIsClient() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,   // client value
+    () => false    // server value
+  );
+}
+
+export function RelativeTime({ date }: { date: Date | null }) {
+  const isClient = useIsClient();
 
   if (!date) return null;
 
-  // Avoid hydration mismatch: render nothing on server,
-  // then show relative time after client mount
-  if (!mounted) {
+  if (!isClient) {
     return <time dateTime={date.toISOString()} />;
   }
 

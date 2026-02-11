@@ -112,12 +112,21 @@ const ArticleCard = memo(function ArticleCard({
     <li
       ref={liRef}
       tabIndex={0}
-      className={`group flex items-start gap-3 rounded-xl border p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all ${
+      className={`group relative flex items-start gap-3 rounded-xl border p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all cursor-pointer ${
         focused
           ? "border-blue-500/50 bg-surface-3"
           : "border-border-subtle bg-surface-2 hover:bg-surface-3 hover:border-border-default"
       }`}
     >
+      {/* Stretched link — makes the entire card clickable */}
+      <a
+        href={article.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute inset-0 z-0"
+        aria-label={article.title || article.url}
+      />
+
       {/* OG Image thumbnail */}
       {article.ogImage && !imgError && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -125,19 +134,14 @@ const ArticleCard = memo(function ArticleCard({
           src={article.ogImage}
           alt=""
           onError={() => setImgError(true)}
-          className="h-16 w-16 shrink-0 rounded-lg object-cover bg-surface-3"
+          className="relative z-0 h-16 w-16 shrink-0 rounded-lg object-cover bg-surface-3"
         />
       )}
 
-      <div className="min-w-0 flex-1">
-        <a
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-sm font-medium text-gray-100 hover:text-blue-400 line-clamp-2"
-        >
+      <div className="relative z-0 min-w-0 flex-1">
+        <span className="block text-sm font-medium text-gray-100 group-hover:text-blue-400 line-clamp-2">
           {article.title || article.url}
-        </a>
+        </span>
         <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400">
           {article.favicon && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -165,10 +169,11 @@ const ArticleCard = memo(function ArticleCard({
         )}
       </div>
 
-      <div className="flex shrink-0 gap-1">
+      {/* Action buttons — elevated above the stretched link */}
+      <div className="relative z-10 flex shrink-0 gap-1">
         <button
           type="button"
-          onClick={() => onToggleRead(article.id, !article.read)}
+          onClick={(e) => { e.stopPropagation(); onToggleRead(article.id, !article.read); }}
           className="rounded p-1.5 text-gray-400 transition-colors hover:bg-surface-3 hover:text-white"
           aria-label={article.read ? "Mark as unread" : "Mark as read"}
         >
@@ -184,7 +189,7 @@ const ArticleCard = memo(function ArticleCard({
         </button>
         <button
           type="button"
-          onClick={() => onDelete(article.id)}
+          onClick={(e) => { e.stopPropagation(); onDelete(article.id); }}
           className="rounded p-1.5 text-gray-400 transition-colors hover:bg-surface-3 hover:text-red-400"
           aria-label="Delete article"
         >
