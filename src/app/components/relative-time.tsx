@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
 const DIVISIONS: { amount: number; name: Intl.RelativeTimeFormatUnit }[] = [
@@ -25,7 +27,19 @@ function formatRelativeTime(date: Date): string {
 }
 
 export function RelativeTime({ date }: { date: Date | null }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!date) return null;
+
+  // Avoid hydration mismatch: render nothing on server,
+  // then show relative time after client mount
+  if (!mounted) {
+    return <time dateTime={date.toISOString()} />;
+  }
 
   return (
     <time dateTime={date.toISOString()} title={date.toLocaleString()}>
