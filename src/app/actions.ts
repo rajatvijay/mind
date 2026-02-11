@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
 import { articles, apiTokens } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { isValidUrl, fetchTitle } from "@/lib/utils";
+import { isValidUrl, fetchMetadata } from "@/lib/utils";
 
 export type ActionState = {
   message: string;
@@ -51,16 +51,20 @@ export async function addArticle(
     return { message: "Already saved — moved to top", status: "success" };
   }
 
-  const title = await fetchTitle(url);
+  const metadata = await fetchMetadata(url);
 
   await db.insert(articles).values({
     userId: session.user.id,
     url,
-    title,
+    title: metadata.title,
+    description: metadata.description,
+    ogImage: metadata.ogImage,
+    favicon: metadata.favicon,
+    domain: metadata.domain,
   });
 
   revalidatePath("/");
-  return { message: `Saved — ${title}`, status: "success" };
+  return { message: `Saved — ${metadata.title}`, status: "success" };
 }
 
 export async function toggleRead(id: string, read: boolean) {

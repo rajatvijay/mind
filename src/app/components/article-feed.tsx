@@ -88,21 +88,48 @@ const ArticleCard = memo(function ArticleCard({
   onToggleRead: (id: string, read: boolean) => void;
   onDelete: (id: string) => void;
 }) {
-  const hostname = new URL(article.url).hostname.replace("www.", "");
+  const hostname = article.domain || new URL(article.url).hostname.replace("www.", "");
+  const [imgError, setImgError] = useState(false);
 
   return (
     <li className="group flex items-start gap-3 rounded-xl border border-border-subtle bg-surface-2 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all hover:bg-surface-3 hover:border-border-default">
+      {/* OG Image thumbnail */}
+      {article.ogImage && !imgError && (
+        <img
+          src={article.ogImage}
+          alt=""
+          onError={() => setImgError(true)}
+          className="h-16 w-16 shrink-0 rounded-lg object-cover bg-surface-3"
+        />
+      )}
+
       <div className="min-w-0 flex-1">
         <a
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block truncate text-sm font-medium text-gray-100 hover:text-blue-400"
+          className="block text-sm font-medium text-gray-100 hover:text-blue-400 line-clamp-2"
         >
           {article.title || article.url}
         </a>
-        <span className="text-xs text-gray-400">{hostname}</span>
+        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400">
+          {article.favicon && (
+            <img
+              src={article.favicon}
+              alt=""
+              className="h-3.5 w-3.5 rounded-sm"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          )}
+          <span>{hostname}</span>
+        </div>
+        {article.description && (
+          <p className="mt-1 text-xs text-gray-400 line-clamp-2">
+            {article.description}
+          </p>
+        )}
       </div>
+
       <div className="flex shrink-0 gap-1">
         <button
           type="button"
@@ -111,32 +138,12 @@ const ArticleCard = memo(function ArticleCard({
           aria-label={article.read ? "Mark as unread" : "Mark as read"}
         >
           {article.read ? (
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 19V5a2 2 0 012-2h14a2 2 0 012 2v14l-9-4-9 4z"
-              />
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19V5a2 2 0 012-2h14a2 2 0 012 2v14l-9-4-9 4z" />
             </svg>
           ) : (
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           )}
         </button>
@@ -146,18 +153,8 @@ const ArticleCard = memo(function ArticleCard({
           className="rounded p-1.5 text-gray-400 transition-colors hover:bg-surface-3 hover:text-red-400"
           aria-label="Delete article"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>

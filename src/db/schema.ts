@@ -69,6 +69,10 @@ export const articles = sqliteTable("articles", {
     .references(() => user.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
   title: text("title").notNull().default(""),
+  description: text("description"),
+  ogImage: text("og_image"),
+  favicon: text("favicon"),
+  domain: text("domain"),
   read: integer("read", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
     () => new Date()

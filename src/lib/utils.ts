@@ -38,11 +38,60 @@ export function extractUrl(urlParam?: string, textParam?: string): string | null
   return null;
 }
 
-export async function fetchTitle(url: string): Promise<string> {
+export type OgMetadata = {
+  title: string;
+  description: string | null;
+  ogImage: string | null;
+  favicon: string | null;
+  domain: string;
+};
+
+function extractMetaContent(html: string, property: string): string | null {
+  // Match both property= and name= attributes
+  const regex = new RegExp(
+    `<meta[^>]*(?:property|name)=["']${property}["'][^>]*content=["']([^"']*)["']|<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["']${property}["']`,
+    "i"
+  );
+  const match = html.match(regex);
+  const value = match?.[1] || match?.[2];
+  return value?.trim() || null;
+}
+
+function extractFavicon(html: string, baseUrl: string): string | null {
+  // Look for <link rel="icon"> or <link rel="shortcut icon">
+  const match = html.match(
+    /<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']*)["']/i
+  );
+  if (match?.[1]) {
+    try {
+      return new URL(match[1], baseUrl).href;
+    } catch {
+      return null;
+    }
+  }
+  // Fallback to Google's favicon service
   try {
-    const { hostname } = new URL(url);
-    if (isPrivateHostname(hostname)) {
-      return new URL(url).hostname;
+    const { origin } = new URL(baseUrl);
+    return `https://www.google.com/s2/favicons?domain=${origin}&sz=32`;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchMetadata(url: string): Promise<OgMetadata> {
+  const parsedUrl = new URL(url);
+  const domain = parsedUrl.hostname.replace("www.", "");
+  const fallback: OgMetadata = {
+    title: domain,
+    description: null,
+    ogImage: null,
+    favicon: null,
+    domain,
+  };
+
+  try {
+    if (isPrivateHostname(parsedUrl.hostname)) {
+      return fallback;
     }
 
     const controller = new AbortController();
@@ -53,9 +102,38 @@ export async function fetchTitle(url: string): Promise<string> {
     });
     clearTimeout(timeout);
     const html = await res.text();
-    const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    return match ? match[1].trim() : new URL(url).hostname;
+
+    // Extract title
+    const ogTitle = extractMetaContent(html, "og:title");
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const title = ogTitle || titleMatch?.[1]?.trim() || domain;
+
+    // Extract description
+    const description =
+      extractMetaContent(html, "og:description") ||
+      extractMetaContent(html, "description");
+
+    // Extract OG image
+    let ogImage = extractMetaContent(html, "og:image");
+    if (ogImage) {
+      try {
+        ogImage = new URL(ogImage, url).href;
+      } catch {
+        ogImage = null;
+      }
+    }
+
+    // Extract favicon
+    const favicon = extractFavicon(html, url);
+
+    return { title, description, ogImage, favicon, domain };
   } catch {
-    return new URL(url).hostname;
+    return fallback;
   }
+}
+
+// Keep backward-compatible fetchTitle for share page
+export async function fetchTitle(url: string): Promise<string> {
+  const metadata = await fetchMetadata(url);
+  return metadata.title;
 }
