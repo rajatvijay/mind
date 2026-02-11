@@ -51,6 +51,21 @@ function SubmitButton() {
   );
 }
 
+function UrlInput({ inputRef }: { inputRef: React.RefObject<HTMLInputElement | null> }) {
+  const { pending } = useFormStatus();
+  return (
+    <input
+      ref={inputRef}
+      type="url"
+      name="url"
+      placeholder="Paste a URL..."
+      required
+      disabled={pending}
+      className="flex-1 rounded-lg border border-border-subtle bg-surface-1 px-4 py-2 text-sm text-gray-100 placeholder-gray-400 focus-visible:border-blue-500 focus-visible:outline-none disabled:opacity-50"
+    />
+  );
+}
+
 // ── Add Article Form ─────────────────────────────────────────────────
 
 function AddArticleForm({ inputRef }: { inputRef: React.RefObject<HTMLInputElement | null> }) {
@@ -73,14 +88,7 @@ function AddArticleForm({ inputRef }: { inputRef: React.RefObject<HTMLInputEleme
 
   return (
     <form ref={formRef} action={formAction} className="mb-8 flex gap-2">
-      <input
-        ref={inputRef}
-        type="url"
-        name="url"
-        placeholder="Paste a URL..."
-        required
-        className="flex-1 rounded-lg border border-border-subtle bg-surface-1 px-4 py-2 text-sm text-gray-100 placeholder-gray-400 focus-visible:border-blue-500 focus-visible:outline-none"
-      />
+      <UrlInput inputRef={inputRef} />
       <SubmitButton />
     </form>
   );
@@ -175,7 +183,7 @@ const ArticleCard = memo(function ArticleCard({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleRead(article.id, !article.read); }}
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-surface-4 hover:text-white active:scale-95"
+          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-surface-4 hover:text-white active:scale-95"
           aria-label={article.read ? "Mark as unread" : "Mark as read"}
         >
           {article.read ? (
@@ -191,7 +199,7 @@ const ArticleCard = memo(function ArticleCard({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onDelete(article.id); }}
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-red-500/15 hover:text-red-400 active:scale-95"
+          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-red-500/15 hover:text-red-400 active:scale-95"
           aria-label="Delete article"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
