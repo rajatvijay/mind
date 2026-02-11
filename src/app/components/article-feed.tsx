@@ -8,9 +8,11 @@ import {
   useEffect,
   useMemo,
   useState,
+  useCallback,
   memo,
 } from "react";
 import { useFormStatus } from "react-dom";
+import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Article } from "@/db/schema";
 import {
@@ -19,6 +21,7 @@ import {
   deleteArticle,
   type ActionState,
 } from "@/app/actions";
+import { KeyboardHelp } from "./keyboard-help";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -27,6 +30,7 @@ type OptimisticAction =
   | { type: "delete"; id: string };
 
 type Tab = "all" | "unread" | "read";
+type Sort = "newest" | "oldest" | "domain";
 
 // ── Submit Button (uses useFormStatus) ───────────────────────────────
 
@@ -45,7 +49,7 @@ function SubmitButton() {
 
 // ── Add Article Form ─────────────────────────────────────────────────
 
-function AddArticleForm() {
+function AddArticleForm({ inputRef }: { inputRef: React.RefObject<HTMLInputElement | null> }) {
   const initialState: ActionState = { message: "", status: "idle" };
   const [state, formAction] = useActionState(addArticle, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -66,6 +70,7 @@ function AddArticleForm() {
   return (
     <form ref={formRef} action={formAction} className="mb-8 flex gap-2">
       <input
+        ref={inputRef}
         type="url"
         name="url"
         placeholder="Paste a URL..."
@@ -83,18 +88,36 @@ const ArticleCard = memo(function ArticleCard({
   article,
   onToggleRead,
   onDelete,
+  focused,
 }: {
   article: Article;
   onToggleRead: (id: string, read: boolean) => void;
   onDelete: (id: string) => void;
+  focused: boolean;
 }) {
   const hostname = article.domain || new URL(article.url).hostname.replace("www.", "");
   const [imgError, setImgError] = useState(false);
+  const liRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    if (focused) {
+      liRef.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [focused]);
 
   return (
-    <li className="group flex items-start gap-3 rounded-xl border border-border-subtle bg-surface-2 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all hover:bg-surface-3 hover:border-border-default">
+    <li
+      ref={liRef}
+      tabIndex={0}
+      className={`group flex items-start gap-3 rounded-xl border p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all ${
+        focused
+          ? "border-blue-500/50 bg-surface-3"
+          : "border-border-subtle bg-surface-2 hover:bg-surface-3 hover:border-border-default"
+      }`}
+    >
       {/* OG Image thumbnail */}
       {article.ogImage && !imgError && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={article.ogImage}
           alt=""
@@ -114,6 +137,7 @@ const ArticleCard = memo(function ArticleCard({
         </a>
         <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-400">
           {article.favicon && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={article.favicon}
               alt=""
@@ -165,10 +189,34 @@ const ArticleCard = memo(function ArticleCard({
 // ── Main Feed Component ──────────────────────────────────────────────
 
 export function ArticleFeed({ articles }: { articles: Article[] }) {
-  const [tab, setTab] = useState<Tab>("all");
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Read initial state from URL params
+  const [tab, setTab] = useState<Tab>(
+    (searchParams.get("tab") as Tab) || "all"
+  );
+  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [sort, setSort] = useState<Sort>(
+    (searchParams.get("sort") as Sort) || "newest"
+  );
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [showHelp, setShowHelp] = useState(false);
+
   const pendingDeletes = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const searchRef = useRef<HTMLInputElement>(null);
+  const urlInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync state to URL params
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (tab !== "all") params.set("tab", tab);
+    if (debouncedSearch) params.set("q", debouncedSearch);
+    if (sort !== "newest") params.set("sort", sort);
+    const qs = params.toString();
+    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+  }, [tab, debouncedSearch, sort, router]);
 
   // Debounce search
   useEffect(() => {
@@ -191,7 +239,7 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
     }
   );
 
-  // Filter + search
+  // Filter + search + sort
   const filtered = useMemo(() => {
     let result = optimisticArticles;
 
@@ -207,8 +255,24 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
       );
     }
 
+    // Sort
+    if (sort === "oldest") {
+      result = [...result].sort(
+        (a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0)
+      );
+    } else if (sort === "domain") {
+      result = [...result].sort((a, b) => {
+        const domainA = a.domain || new URL(a.url).hostname;
+        const domainB = b.domain || new URL(b.url).hostname;
+        const cmp = domainA.localeCompare(domainB);
+        if (cmp !== 0) return cmp;
+        return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
+      });
+    }
+    // "newest" is already the default order from the server
+
     return result;
-  }, [optimisticArticles, tab, debouncedSearch]);
+  }, [optimisticArticles, tab, debouncedSearch, sort]);
 
   const unreadCount = optimisticArticles.filter((a) => !a.read).length;
   const readCount = optimisticArticles.filter((a) => a.read).length;
@@ -225,24 +289,20 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
       dispatch({ type: "delete", id });
     });
 
-    // Show undo toast — actual delete happens after toast expires
     toast("Article deleted", {
       action: {
         label: "Undo",
         onClick: () => {
-          // Cancel the pending delete
           const timer = pendingDeletes.current.get(id);
           if (timer) {
             clearTimeout(timer);
             pendingDeletes.current.delete(id);
           }
-          // Revalidate to restore the article from server state
           window.location.reload();
         },
       },
       duration: 5000,
       onAutoClose: () => {
-        // Actually delete on server when toast expires
         pendingDeletes.current.delete(id);
         deleteArticle(id);
       },
@@ -252,7 +312,6 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
       },
     });
 
-    // Track the pending delete
     const timer = setTimeout(() => {
       pendingDeletes.current.delete(id);
     }, 6000);
@@ -270,20 +329,117 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
     };
   }, []);
 
+  // Reset focus when filtered list changes
+  useEffect(() => {
+    setFocusedIndex(-1);
+  }, [tab, debouncedSearch, sort]);
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isTyping =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
+      // Escape always works
+      if (e.key === "Escape") {
+        if (showHelp) {
+          setShowHelp(false);
+          return;
+        }
+        if (isTyping) {
+          (target as HTMLInputElement).blur();
+          return;
+        }
+        if (search) {
+          setSearch("");
+          return;
+        }
+        setFocusedIndex(-1);
+        return;
+      }
+
+      if (isTyping) return;
+
+      switch (e.key) {
+        case "/":
+          e.preventDefault();
+          searchRef.current?.focus();
+          break;
+        case "n":
+          e.preventDefault();
+          urlInputRef.current?.focus();
+          break;
+        case "j":
+          e.preventDefault();
+          setFocusedIndex((i) => Math.min(i + 1, filtered.length - 1));
+          break;
+        case "k":
+          e.preventDefault();
+          setFocusedIndex((i) => Math.max(i - 1, 0));
+          break;
+        case "o":
+        case "Enter":
+          if (focusedIndex >= 0 && focusedIndex < filtered.length) {
+            e.preventDefault();
+            window.open(filtered[focusedIndex].url, "_blank");
+          }
+          break;
+        case "e":
+          if (focusedIndex >= 0 && focusedIndex < filtered.length) {
+            const article = filtered[focusedIndex];
+            handleToggleRead(article.id, !article.read);
+          }
+          break;
+        case "Backspace":
+        case "#":
+          if (focusedIndex >= 0 && focusedIndex < filtered.length) {
+            e.preventDefault();
+            const article = filtered[focusedIndex];
+            handleDelete(article.id);
+            // Move focus to next article (or previous if last)
+            setFocusedIndex((i) =>
+              i >= filtered.length - 1 ? Math.max(0, i - 1) : i
+            );
+          }
+          break;
+        case "?":
+          e.preventDefault();
+          setShowHelp((s) => !s);
+          break;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filtered, focusedIndex, search, showHelp]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: "all", label: "All", count: optimisticArticles.length },
     { key: "unread", label: "Unread", count: unreadCount },
     { key: "read", label: "Read", count: readCount },
   ];
 
+  const sortOptions: { key: Sort; label: string }[] = [
+    { key: "newest", label: "Newest" },
+    { key: "oldest", label: "Oldest" },
+    { key: "domain", label: "By site" },
+  ];
+
   return (
     <>
-      <AddArticleForm />
+      <AddArticleForm inputRef={urlInputRef} />
 
-      {/* Search */}
+      {/* Search + Sort row */}
       {optimisticArticles.length > 0 && (
-        <div className="mb-4">
-          <div className="relative">
+        <div className="mb-4 flex gap-2">
+          <div className="relative flex-1">
             <svg
               className="absolute left-3 top-2.5 h-4 w-4 text-gray-400"
               fill="none"
@@ -298,11 +454,12 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
               />
             </svg>
             <input
+              ref={searchRef}
               type="search"
-              placeholder="Search articles..."
+              placeholder="Search articles... ( / )"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-border-subtle bg-surface-1 py-2 pl-10 pr-4 text-sm text-gray-100 placeholder-gray-400 focus-visible:border-blue-500 focus-visible:outline-none"
+              className="w-full rounded-lg border border-border-subtle bg-surface-1 py-2 pl-10 pr-8 text-sm text-gray-100 placeholder-gray-400 focus-visible:border-blue-500 focus-visible:outline-none"
               aria-label="Search articles"
             />
             {search && (
@@ -311,22 +468,26 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
                 aria-label="Clear search"
                 className="absolute right-3 top-2 text-gray-400 hover:text-gray-200"
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             )}
           </div>
+
+          {/* Sort dropdown */}
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as Sort)}
+            className="rounded-lg border border-border-subtle bg-surface-1 px-3 py-2 text-xs text-gray-300 focus-visible:border-blue-500 focus-visible:outline-none"
+            aria-label="Sort articles"
+          >
+            {sortOptions.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -359,12 +520,13 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
       {/* Article list */}
       {filtered.length > 0 ? (
         <ul className="space-y-2" role="feed" aria-label="Articles">
-          {filtered.map((article) => (
+          {filtered.map((article, i) => (
             <ArticleCard
               key={article.id}
               article={article}
               onToggleRead={handleToggleRead}
               onDelete={handleDelete}
+              focused={i === focusedIndex}
             />
           ))}
         </ul>
@@ -391,6 +553,15 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
           No read articles yet.
         </p>
       )}
+
+      {/* Keyboard shortcut hint */}
+      {optimisticArticles.length > 0 && (
+        <p className="mt-6 text-center text-xs text-gray-500">
+          Press <kbd className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-gray-400">?</kbd> for keyboard shortcuts
+        </p>
+      )}
+
+      <KeyboardHelp open={showHelp} onClose={() => setShowHelp(false)} />
     </>
   );
 }

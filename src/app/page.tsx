@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
@@ -29,7 +30,9 @@ export default async function Home() {
         </div>
       </header>
 
-      <ArticleFeed articles={items} />
+      <Suspense>
+        <ArticleFeed articles={items} />
+      </Suspense>
 
       {/* Settings */}
       <div className="my-8 h-px bg-gradient-to-r from-transparent via-gray-800 to-transparent" />
