@@ -169,20 +169,20 @@ const ArticleCard = memo(function ArticleCard({
         )}
       </div>
 
-      {/* Action buttons — elevated above the stretched link */}
-      <div className="relative z-10 flex shrink-0 gap-1">
+      {/* Action buttons — elevated above the stretched link, 44x44px AAA touch targets */}
+      <div className="relative z-10 flex shrink-0 items-start gap-0.5">
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleRead(article.id, !article.read); }}
-          className="rounded p-1.5 text-gray-400 transition-colors hover:bg-surface-3 hover:text-white"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-surface-3 hover:text-white"
           aria-label={article.read ? "Mark as unread" : "Mark as read"}
         >
           {article.read ? (
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19V5a2 2 0 012-2h14a2 2 0 012 2v14l-9-4-9 4z" />
             </svg>
           ) : (
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           )}
@@ -190,10 +190,10 @@ const ArticleCard = memo(function ArticleCard({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onDelete(article.id); }}
-          className="rounded p-1.5 text-gray-400 transition-colors hover:bg-surface-3 hover:text-red-400"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-surface-3 hover:text-red-400"
           aria-label="Delete article"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
