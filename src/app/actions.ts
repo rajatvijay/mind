@@ -88,6 +88,33 @@ export async function deleteArticle(id: string) {
   revalidatePath("/");
 }
 
+export async function restoreArticle(data: {
+  userId: string;
+  url: string;
+  title: string;
+  description: string | null;
+  ogImage: string | null;
+  favicon: string | null;
+  domain: string | null;
+  read: boolean | null;
+}) {
+  const session = await getSessionOrThrow();
+  if (session.user.id !== data.userId) throw new Error("Unauthorized");
+
+  await db.insert(articles).values({
+    userId: data.userId,
+    url: data.url,
+    title: data.title,
+    description: data.description,
+    ogImage: data.ogImage,
+    favicon: data.favicon,
+    domain: data.domain,
+    read: data.read ?? false,
+  });
+
+  revalidatePath("/");
+}
+
 export async function generateApiToken() {
   const session = await getSessionOrThrow();
 

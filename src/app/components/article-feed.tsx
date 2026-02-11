@@ -19,6 +19,7 @@ import {
   addArticle,
   toggleRead,
   deleteArticle,
+  restoreArticle,
   type ActionState,
 } from "@/app/actions";
 import { KeyboardHelp } from "./keyboard-help";
@@ -220,7 +221,6 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [showHelp, setShowHelp] = useState(false);
 
-  const pendingDeletes = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const searchRef = useRef<HTMLInputElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
 
@@ -301,49 +301,35 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
   }
 
   function handleDelete(id: string) {
-    startTransition(() => {
+    // Store article data for potential undo before removing
+    const article = optimisticArticles.find((a) => a.id === id);
+
+    startTransition(async () => {
       dispatch({ type: "delete", id });
+      await deleteArticle(id);
     });
 
-    toast("Article deleted", {
-      action: {
-        label: "Undo",
-        onClick: () => {
-          const timer = pendingDeletes.current.get(id);
-          if (timer) {
-            clearTimeout(timer);
-            pendingDeletes.current.delete(id);
-          }
-          window.location.reload();
+    if (article) {
+      toast("Article deleted", {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            restoreArticle({
+              userId: article.userId,
+              url: article.url,
+              title: article.title,
+              description: article.description,
+              ogImage: article.ogImage,
+              favicon: article.favicon,
+              domain: article.domain,
+              read: article.read,
+            });
+          },
         },
-      },
-      duration: 5000,
-      onAutoClose: () => {
-        pendingDeletes.current.delete(id);
-        deleteArticle(id);
-      },
-      onDismiss: () => {
-        pendingDeletes.current.delete(id);
-        deleteArticle(id);
-      },
-    });
-
-    const timer = setTimeout(() => {
-      pendingDeletes.current.delete(id);
-    }, 6000);
-    pendingDeletes.current.set(id, timer);
-  }
-
-  // Cleanup pending deletes on unmount
-  useEffect(() => {
-    const deletes = pendingDeletes.current;
-    return () => {
-      deletes.forEach((timer, id) => {
-        clearTimeout(timer);
-        deleteArticle(id);
+        duration: 5000,
       });
-    };
-  }, []);
+    }
+  }
 
   // Reset focus when filtered list changes
   useEffect(() => {
