@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import { RegisterSW } from "./register-sw";
 import "./globals.css";
 
@@ -44,6 +45,7 @@ export default function RootLayout({
           Skip to content
         </a>
         {children}
+        <Toaster theme="dark" position="top-center" />
         <RegisterSW />
       </body>
     </html>

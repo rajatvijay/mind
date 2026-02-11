@@ -58,6 +58,8 @@ export const verification = sqliteTable("verifications", {
 
 // ── App tables ───────────────────────────────────────────────────────
 
+export type Article = typeof articles.$inferSelect;
+
 export const articles = sqliteTable("articles", {
   id: text("id")
     .primaryKey()
