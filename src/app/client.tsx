@@ -14,7 +14,7 @@ export function SignOutButton() {
           },
         })
       }
-      className="rounded-lg border border-gray-700 px-3 py-1.5 text-xs text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+      className="rounded-lg border border-border-subtle px-3 py-1.5 text-xs text-gray-400 transition-colors hover:bg-surface-3 hover:text-white"
     >
       Sign out
     </button>
@@ -61,7 +61,7 @@ export function GenerateTokenSection() {
         <button
           onClick={handleGenerate}
           disabled={loading}
-          className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-800 hover:text-white disabled:opacity-50"
+          className="rounded-lg border border-border-subtle px-4 py-2 text-sm text-gray-300 transition-colors hover:bg-surface-3 hover:text-white disabled:opacity-50"
         >
           {loading ? "Generating..." : "Generate API Token"}
         </button>

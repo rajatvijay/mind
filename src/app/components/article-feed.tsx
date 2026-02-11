@@ -36,7 +36,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-blue-500 disabled:opacity-50"
+      className="rounded-lg bg-blue-500/90 px-4 py-2 text-sm font-medium transition-all hover:bg-blue-400/90 active:scale-[0.98] disabled:opacity-50"
     >
       {pending ? "Saving..." : "Save"}
     </button>
@@ -70,7 +70,7 @@ function AddArticleForm() {
         name="url"
         placeholder="Paste a URL..."
         required
-        className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-sm text-gray-100 placeholder-gray-400 focus-visible:border-blue-500 focus-visible:outline-none"
+        className="flex-1 rounded-lg border border-border-subtle bg-surface-1 px-4 py-2 text-sm text-gray-100 placeholder-gray-400 focus-visible:border-blue-500 focus-visible:outline-none"
       />
       <SubmitButton />
     </form>
@@ -91,7 +91,7 @@ const ArticleCard = memo(function ArticleCard({
   const hostname = new URL(article.url).hostname.replace("www.", "");
 
   return (
-    <li className="group flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900 p-3 transition-colors hover:bg-gray-800/50">
+    <li className="group flex items-start gap-3 rounded-xl border border-border-subtle bg-surface-2 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all hover:bg-surface-3 hover:border-border-default">
       <div className="min-w-0 flex-1">
         <a
           href={article.url}
@@ -107,7 +107,7 @@ const ArticleCard = memo(function ArticleCard({
         <button
           type="button"
           onClick={() => onToggleRead(article.id, !article.read)}
-          className="rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+          className="rounded p-1.5 text-gray-400 transition-colors hover:bg-surface-3 hover:text-white"
           aria-label={article.read ? "Mark as unread" : "Mark as read"}
         >
           {article.read ? (
@@ -143,7 +143,7 @@ const ArticleCard = memo(function ArticleCard({
         <button
           type="button"
           onClick={() => onDelete(article.id)}
-          className="rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-800 hover:text-red-400"
+          className="rounded p-1.5 text-gray-400 transition-colors hover:bg-surface-3 hover:text-red-400"
           aria-label="Delete article"
         >
           <svg
@@ -305,7 +305,7 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
               placeholder="Search articles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-gray-800 bg-gray-900 py-2 pl-10 pr-4 text-sm text-gray-100 placeholder-gray-400 focus-visible:border-blue-500 focus-visible:outline-none"
+              className="w-full rounded-lg border border-border-subtle bg-surface-1 py-2 pl-10 pr-4 text-sm text-gray-100 placeholder-gray-400 focus-visible:border-blue-500 focus-visible:outline-none"
               aria-label="Search articles"
             />
             {search && (
@@ -336,7 +336,7 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
       {/* Filter tabs */}
       {optimisticArticles.length > 0 && (
         <div
-          className="mb-6 flex gap-1 rounded-lg bg-gray-900 p-1"
+          className="mb-6 flex gap-1 rounded-lg bg-surface-1 p-1"
           role="tablist"
           aria-label="Filter articles"
         >
@@ -348,7 +348,7 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
               onClick={() => setTab(t.key)}
               className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                 tab === t.key
-                  ? "bg-gray-800 text-gray-100"
+                  ? "bg-surface-3 text-gray-100"
                   : "text-gray-400 hover:text-gray-300"
               }`}
             >

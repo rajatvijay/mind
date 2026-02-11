@@ -20,7 +20,7 @@ export default async function Home() {
     .orderBy(desc(articles.createdAt));
 
   return (
-    <main id="main-content" className="mx-auto min-h-screen max-w-2xl bg-gray-950 px-4 py-8 text-gray-100">
+    <main id="main-content" className="relative z-10 mx-auto min-h-screen max-w-2xl px-4 py-8 text-gray-100">
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mind</h1>
         <div className="flex items-center gap-3">

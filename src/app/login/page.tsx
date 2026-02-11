@@ -16,7 +16,7 @@ function LoginButton() {
           callbackURL: next,
         })
       }
-      className="flex items-center gap-3 rounded-lg bg-white px-6 py-3 text-sm font-medium text-gray-800 shadow-md transition-colors hover:bg-gray-50"
+      className="flex items-center gap-3 rounded-lg bg-white px-6 py-3 text-sm font-medium text-gray-800 shadow-lg shadow-black/20 transition-all hover:bg-gray-50 active:scale-[0.98]"
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24">
         <path
@@ -43,8 +43,8 @@ function LoginButton() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-950 px-4">
-      <div className="mb-8 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+      <div className="animate-fade-in-up mb-8 text-center">
         <h1 className="text-4xl font-bold text-gray-100">Mind</h1>
         <p className="mt-2 text-gray-400">Save articles. Read later.</p>
       </div>
