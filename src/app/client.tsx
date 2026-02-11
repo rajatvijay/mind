@@ -37,10 +37,10 @@ export function GenerateTokenSection() {
 
   return (
     <section>
-      <h2 className="mb-2 text-sm font-medium uppercase tracking-wide text-gray-500">
+      <h2 className="mb-2 text-sm font-medium uppercase tracking-wide text-gray-400">
         iOS Shortcut Setup
       </h2>
-      <p className="mb-3 text-xs text-gray-500">
+      <p className="mb-3 text-xs text-gray-400">
         Generate a token, then create an Apple Shortcut that POSTs to{" "}
         <code className="text-gray-400">/api/save</code> with header{" "}
         <code className="text-gray-400">

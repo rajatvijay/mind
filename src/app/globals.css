@@ -2,7 +2,7 @@
 
 :root {
   --background: #030712;
-  --foreground: #ffffff;
+  --foreground: #f3f4f6;
 }
 
 @theme inline {
@@ -15,4 +15,26 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 50;
+  padding: 0.5rem 1rem;
+  background: #60a5fa;
+  color: #030712;
+  font-weight: 500;
+  border-radius: 0 0 0.5rem 0;
+}
+
+.skip-to-content:focus {
+  left: 0;
 }

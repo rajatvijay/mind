@@ -23,7 +23,7 @@ export default async function Home() {
   const read = items.filter((a) => a.read);
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl bg-gray-950 px-4 py-8 text-white">
+    <main id="main-content" className="mx-auto min-h-screen max-w-2xl bg-gray-950 px-4 py-8 text-gray-100">
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mind</h1>
         <div className="flex items-center gap-3">
@@ -39,7 +39,7 @@ export default async function Home() {
           name="url"
           placeholder="Paste a URL..."
           required
-          className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+          className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-sm text-gray-100 placeholder-gray-400 focus-visible:border-blue-500 focus-visible:outline-none"
         />
         <button
           type="submit"
@@ -52,7 +52,7 @@ export default async function Home() {
       {/* Unread articles */}
       {unread.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-500">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-400">
             Unread ({unread.length})
           </h2>
           <ul className="space-y-2">
@@ -66,7 +66,7 @@ export default async function Home() {
       {/* Read articles */}
       {read.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-500">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-gray-400">
             Read ({read.length})
           </h2>
           <ul className="space-y-2">
@@ -78,7 +78,7 @@ export default async function Home() {
       )}
 
       {items.length === 0 && (
-        <p className="text-center text-gray-500">
+        <p className="text-center text-gray-400">
           No articles yet. Paste a URL above or share from your phone.
         </p>
       )}
@@ -86,7 +86,7 @@ export default async function Home() {
       {/* Settings */}
       <hr className="my-8 border-gray-800" />
       <GenerateTokenSection />
-    </div>
+    </main>
   );
 }
 
@@ -110,11 +110,11 @@ function ArticleRow({
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block truncate text-sm font-medium text-white hover:text-blue-400"
+          className="block truncate text-sm font-medium text-gray-100 hover:text-blue-400"
         >
           {article.title || article.url}
         </a>
-        <span className="text-xs text-gray-500">{hostname}</span>
+        <span className="text-xs text-gray-400">{hostname}</span>
       </div>
       <div className="flex shrink-0 gap-1">
         <form
@@ -125,8 +125,8 @@ function ArticleRow({
         >
           <button
             type="submit"
-            className="rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-white"
-            title={article.read ? "Mark unread" : "Mark read"}
+            className="rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+            aria-label={article.read ? "Mark as unread" : "Mark as read"}
           >
             {article.read ? (
               <svg
@@ -167,8 +167,8 @@ function ArticleRow({
         >
           <button
             type="submit"
-            className="rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-red-400"
-            title="Delete"
+            className="rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-800 hover:text-red-400"
+            aria-label="Delete article"
           >
             <svg
               className="h-4 w-4"
