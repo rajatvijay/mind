@@ -52,6 +52,14 @@ body::before {
   z-index: 0;
 }
 
+button,
+[role="tab"],
+select,
+a,
+summary {
+  cursor: pointer;
+}
+
 :focus-visible {
   outline: 2px solid #60a5fa;
   outline-offset: 2px;

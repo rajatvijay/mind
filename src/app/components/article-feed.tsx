@@ -183,7 +183,7 @@ const ArticleCard = memo(function ArticleCard({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleRead(article.id, !article.read); }}
-          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-surface-4 hover:text-white active:scale-95"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-surface-4 hover:text-white active:scale-95"
           aria-label={article.read ? "Mark as unread" : "Mark as read"}
         >
           {article.read ? (
@@ -199,7 +199,7 @@ const ArticleCard = memo(function ArticleCard({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onDelete(article.id); }}
-          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-red-500/15 hover:text-red-400 active:scale-95"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-red-500/15 hover:text-red-400 active:scale-95"
           aria-label="Delete article"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -219,7 +219,7 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
 
   // Read initial state from URL params
   const [tab, setTab] = useState<Tab>(
-    (searchParams.get("tab") as Tab) || "all"
+    (searchParams.get("tab") as Tab) || "unread"
   );
   const [search, setSearch] = useState(searchParams.get("q") || "");
   const [sort, setSort] = useState<Sort>(
@@ -235,7 +235,7 @@ export function ArticleFeed({ articles }: { articles: Article[] }) {
   // Sync state to URL params
   useEffect(() => {
     const params = new URLSearchParams();
-    if (tab !== "all") params.set("tab", tab);
+    if (tab !== "unread") params.set("tab", tab);
     if (debouncedSearch) params.set("q", debouncedSearch);
     if (sort !== "newest") params.set("sort", sort);
     const qs = params.toString();
