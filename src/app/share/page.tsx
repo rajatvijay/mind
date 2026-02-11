@@ -3,8 +3,9 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db/client";
 import { articles } from "@/db/schema";
-import { extractUrl, fetchTitle } from "@/lib/utils";
+import { extractUrl, fetchMetadata } from "@/lib/utils";
 
+// Handles GET share targets (backward compat + direct links)
 export default async function SharePage({
   searchParams,
 }: {
@@ -26,12 +27,16 @@ export default async function SharePage({
     redirect("/");
   }
 
-  const title = params.title || (await fetchTitle(url));
+  const metadata = await fetchMetadata(url);
 
   await db.insert(articles).values({
     userId: session.user.id,
     url,
-    title,
+    title: params.title || metadata.title,
+    description: metadata.description,
+    ogImage: metadata.ogImage,
+    favicon: metadata.favicon,
+    domain: metadata.domain,
   });
 
   redirect("/");

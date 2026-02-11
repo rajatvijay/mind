@@ -9,8 +9,7 @@ export async function middleware(req: NextRequest) {
     pathname === "/offline" ||
     pathname === "/sw.js" ||
     pathname === "/manifest.webmanifest" ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/save") ||
+    pathname.startsWith("/api/") ||
     pathname.startsWith("/icons") ||
     pathname.startsWith("/_next")
   ) {
