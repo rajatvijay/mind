@@ -174,7 +174,7 @@ const ArticleCard = memo(function ArticleCard({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggleRead(article.id, !article.read); }}
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-surface-3 hover:text-white"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-surface-4 hover:text-white active:scale-95"
           aria-label={article.read ? "Mark as unread" : "Mark as read"}
         >
           {article.read ? (
@@ -190,7 +190,7 @@ const ArticleCard = memo(function ArticleCard({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onDelete(article.id); }}
-          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-surface-3 hover:text-red-400"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-red-500/15 hover:text-red-400 active:scale-95"
           aria-label="Delete article"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
