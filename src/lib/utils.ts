@@ -78,6 +78,47 @@ function extractFavicon(html: string, baseUrl: string): string | null {
   }
 }
 
+// X/Twitter oEmbed API — free, public, no auth required
+async function fetchTwitterMetadata(url: string): Promise<OgMetadata | null> {
+  try {
+    const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(oembedUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    // data.html is a <blockquote> containing the tweet text
+    const tweetText = data.html
+      ?.replace(/<[^>]+>/g, " ")  // strip HTML tags
+      ?.replace(/\s+/g, " ")      // collapse whitespace
+      ?.replace(/&amp;/g, "&")
+      ?.replace(/&lt;/g, "<")
+      ?.replace(/&gt;/g, ">")
+      ?.replace(/&quot;/g, '"')
+      ?.replace(/&#39;/g, "'")
+      ?.replace(/&mdash;/g, "—")
+      ?.trim();
+
+    return {
+      title: `${data.author_name} on X`,
+      description: tweetText || null,
+      ogImage: null, // oEmbed doesn't return images for tweets
+      favicon: "https://abs.twimg.com/favicons/twitter.3.ico",
+      domain: "x.com",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isTwitterUrl(hostname: string): boolean {
+  return hostname === "x.com" || hostname === "twitter.com"
+    || hostname === "www.x.com" || hostname === "www.twitter.com";
+}
+
 export async function fetchMetadata(url: string): Promise<OgMetadata> {
   const parsedUrl = new URL(url);
   const domain = parsedUrl.hostname.replace("www.", "");
@@ -91,6 +132,13 @@ export async function fetchMetadata(url: string): Promise<OgMetadata> {
 
   try {
     if (isPrivateHostname(parsedUrl.hostname)) {
+      return fallback;
+    }
+
+    // Use oEmbed for Twitter/X links
+    if (isTwitterUrl(parsedUrl.hostname)) {
+      const twitterMeta = await fetchTwitterMetadata(url);
+      if (twitterMeta) return twitterMeta;
       return fallback;
     }
 
