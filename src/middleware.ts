@@ -11,6 +11,8 @@ export async function middleware(req: NextRequest) {
     pathname === "/manifest.webmanifest" ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/icons") ||
+    pathname.startsWith("/splash") ||
+    pathname.startsWith("/screenshots") ||
     pathname.startsWith("/_next")
   ) {
     return NextResponse.next();

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mind-v1";
+const CACHE_NAME = "mind-v2";
 const OFFLINE_URL = "/offline";
 
 // App shell — cached on install
@@ -61,9 +61,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigation requests (HTML pages): network-first with offline fallback
+  // Navigation requests (HTML pages): stale-while-revalidate
+  // Serves cached article list instantly, refreshes in background
   if (request.mode === "navigate") {
-    event.respondWith(networkFirstWithOfflineFallback(request));
+    event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
@@ -103,28 +104,35 @@ async function networkFirst(request) {
   }
 }
 
-async function networkFirstWithOfflineFallback(request) {
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    // Try to serve cached version of the page
-    const cached = await caches.match(request);
-    if (cached) return cached;
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
 
-    // Fall back to offline page
-    const offlinePage = await caches.match(OFFLINE_URL);
-    if (offlinePage) return offlinePage;
+  // Fire off revalidation in the background
+  const fetchPromise = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
 
-    return new Response("Offline", {
-      status: 503,
-      headers: { "Content-Type": "text/plain" },
-    });
-  }
+  // If we have a cached version, return it immediately
+  if (cached) return cached;
+
+  // No cache — must wait for network
+  const response = await fetchPromise;
+  if (response) return response;
+
+  // Network also failed — show offline page
+  const offlinePage = await cache.match(OFFLINE_URL);
+  if (offlinePage) return offlinePage;
+
+  return new Response("Offline", {
+    status: 503,
+    headers: { "Content-Type": "text/plain" },
+  });
 }
 
 // ── Listen for skip-waiting message from client ──────────────────────

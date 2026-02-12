@@ -35,6 +35,22 @@ export default function manifest(): MetadataRoute.Manifest &
         url: "url",
       },
     },
+    screenshots: [
+      {
+        src: "/screenshots/screenshot-mobile.png",
+        sizes: "1290x2796",
+        type: "image/png",
+        form_factor: "narrow",
+        label: "Article list on mobile",
+      },
+      {
+        src: "/screenshots/screenshot-desktop.png",
+        sizes: "2560x1440",
+        type: "image/png",
+        form_factor: "wide",
+        label: "Article list on desktop",
+      },
+    ],
     handle_links: "preferred",
   } as MetadataRoute.Manifest & Record<string, unknown>;
 }
