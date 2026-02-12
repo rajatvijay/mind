@@ -6,6 +6,7 @@ import { articles } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { SignOutButton, GenerateTokenSection } from "./client";
 import { ArticleFeed } from "./components/article-feed";
+import { PullToRefresh } from "./components/pull-to-refresh";
 
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -21,6 +22,8 @@ export default async function Home() {
     .orderBy(desc(articles.createdAt));
 
   return (
+    <>
+    <PullToRefresh />
     <main id="main-content" className="relative z-10 mx-auto min-h-screen max-w-2xl px-4 py-8 text-gray-100">
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mind</h1>
@@ -38,5 +41,6 @@ export default async function Home() {
       <div className="my-8 h-px bg-gradient-to-r from-transparent via-gray-800 to-transparent" />
       <GenerateTokenSection />
     </main>
+    </>
   );
 }

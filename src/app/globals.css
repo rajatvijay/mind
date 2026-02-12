@@ -98,6 +98,18 @@ summary {
   animation: fade-in-up 0.4s ease-out;
 }
 
+/* Disable rubber-band bounce in standalone PWA for pull-to-refresh */
+@media (display-mode: standalone) {
+  html, body {
+    overscroll-behavior-y: none;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up {
     animation: none;
