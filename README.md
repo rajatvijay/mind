@@ -75,6 +75,27 @@ npx vercel
 
 Set the same env vars in your provider's dashboard and update `BETTER_AUTH_URL` to your production URL.
 
+## iOS Shortcut
+
+Save articles from Safari's share sheet using an iOS Shortcut.
+
+**[Import the shortcut](https://www.icloud.com/shortcuts/8d662e973ec44a7facbc7a4cb478430c)** — you'll be asked to set your Mind URL and API token on import.
+
+To generate an API token, open your Mind instance and use the **iOS Shortcut Setup** section on the main page.
+
+### Build your own
+
+If you'd rather create one from scratch:
+
+1. Open the **Shortcuts** app → tap **+**
+2. Add a **URL** action — set it to `https://your-mind-url/api/articles`
+3. Add a **Get Contents of URL** action:
+   - Method: **POST**
+   - Headers: `Authorization: Bearer YOUR_TOKEN`
+   - Body (JSON): `{"url": "Shortcut Input"}`
+4. Use **Receive** > **URLs** from the share sheet as input
+5. Done — share any link from Safari and pick your shortcut
+
 ## Contributing
 
 1. Fork the repo
